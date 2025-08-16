@@ -24,11 +24,9 @@ where
     /// (2)                  o------r
     /// ```
     pub fn merge(&self) -> Result<Self, SetError> {
-        if self.is_sorted() {
-            Ok(self.merge_unchecked())
-        } else {
-            Err(SetError::UnsortedSet)
-        }
+    // Delegate to merge_with to allow a default combine function while
+    // preserving the previous public API behavior.
+    self.merge_with(Self::default_combine)
     }
 
     /// Merges overlapping intervals within a container
@@ -100,6 +98,20 @@ where
         }
     }
 
+    /// Default combine function that preserves existing merge semantics.
+    fn default_combine(a: &I, b: &I) -> I {
+        let mut out = a.to_owned();
+        let new_min = a.start().min(b.start());
+        let new_max = a.end().max(b.end());
+        out.update_endpoints(&new_min, &new_max);
+        if a.strand() == b.strand() {
+            out.update_strand(a.strand());
+        } else {
+            out.update_strand(None);
+        }
+        out
+    }
+
     fn add_interval(iv: &I, cluster_intervals: &mut Vec<I>) {
         cluster_intervals.push(iv.to_owned());
     }
@@ -160,6 +172,35 @@ where
 
     #[must_use]
     pub fn merge_unchecked(&self) -> Self {
+        self.merge_with_unchecked(Self::default_combine)
+    }
+
+    /// Like `merge`, but accepts a user-supplied combine function that is used
+    /// to produce the merged interval when two intervals are merged.
+    ///
+    /// The combine closure is called whenever two intervals should be merged
+    /// (i.e. they overlap or border). It receives references to the current
+    /// base interval and the new interval and must return a new `I` value that
+    /// represents the merged interval.
+    pub fn merge_with<F>(&self, combine: F) -> Result<Self, SetError>
+    where
+        F: FnMut(&I, &I) -> I,
+    {
+        if self.is_sorted() {
+            Ok(self.merge_with_unchecked(combine))
+        } else {
+            Err(SetError::UnsortedSet)
+        }
+    }
+
+    /// Unchecked variant of `merge_with` that does not validate sortedness.
+    ///
+    /// See `merge_with` for the semantics of the `combine` closure.
+    #[must_use]
+    pub fn merge_with_unchecked<F>(&self, mut combine: F) -> Self
+    where
+        F: FnMut(&I, &I) -> I,
+    {
         let mut base = I::empty();
         Self::reset_base(&mut base, &self.records()[0]);
 
@@ -167,7 +208,7 @@ where
 
         for iv in self.records() {
             if Self::merge_pred(&base, iv) {
-                Self::update_base_coordinates(&mut base, iv);
+                base = combine(&base, iv);
             } else {
                 Self::add_interval(&base, &mut cluster_intervals);
                 Self::reset_base(&mut base, iv);
