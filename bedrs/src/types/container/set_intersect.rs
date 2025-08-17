@@ -67,4 +67,27 @@ where
         });
         Box::new(ix_iter)
     }
+
+    /// Find the intersection of two sets of intervals with customized metadata handling.
+    ///
+    /// Returns intersections with interval type determined by the combiner function
+    pub fn ix_set_query_with<Iv>(
+        &'a self,
+        other: &'a IntervalContainer<Iv, C, T>,
+        method: Query<T>,
+        combiner: fn(&I, &I) -> I,
+    ) -> Box<dyn Iterator<Item = I> + 'a>
+    where
+        Iv: IntervalBounds<C, T> + 'a,
+    {
+        let ix_iter = self.records().iter().flat_map(move |iv| {
+            let overlaps = other
+                .query_iter(iv, method)
+                .expect("Failed to find overlaps with provided query method");
+            overlaps.into_iter().filter_map(move |ov| {
+                ov.intersect(iv).map(|x| combiner(iv, &x))
+            })
+        });
+        Box::new(ix_iter)
+    }
 }

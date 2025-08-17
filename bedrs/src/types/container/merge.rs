@@ -176,12 +176,7 @@ where
     }
 
     /// Like `merge`, but accepts a user-supplied combine function that is used
-    /// to produce the merged interval when two intervals are merged.
-    ///
-    /// The combine closure is called whenever two intervals should be merged
-    /// (i.e. they overlap or border). It receives references to the current
-    /// base interval and the new interval and must return a new `I` value that
-    /// represents the merged interval.
+    /// to produce the merged interval.
     pub fn merge_with<F>(&self, combine: F) -> Result<Self, SetError>
     where
         F: FnMut(&I, &I) -> I,
@@ -194,8 +189,6 @@ where
     }
 
     /// Unchecked variant of `merge_with` that does not validate sortedness.
-    ///
-    /// See `merge_with` for the semantics of the `combine` closure.
     #[must_use]
     pub fn merge_with_unchecked<F>(&self, mut combine: F) -> Self
     where
