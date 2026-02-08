@@ -148,7 +148,7 @@ mod testing {
         Subtract,
     };
     #[cfg(feature = "serde")]
-    use bincode::{deserialize, serialize};
+    use serde_json::{from_slice as deserialize, to_vec as serialize};
     use std::cmp::Ordering;
 
     #[test]

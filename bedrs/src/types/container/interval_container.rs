@@ -124,7 +124,7 @@ where
         Ok(iv)
     }
     #[allow(clippy::iter_without_into_iter)]
-    pub fn iter(&self) -> IntervalIterRef<I, C, T> {
+    pub fn iter(&self) -> IntervalIterRef<'_, I, C, T> {
         IntervalIterRef::new(self.records())
     }
     #[allow(clippy::should_implement_trait)]
@@ -252,8 +252,8 @@ mod testing {
     use super::*;
     use crate::{BaseInterval, Bed3, Coordinates, Strand, StrandedBed3};
     #[cfg(feature = "serde")]
-    use bincode::{deserialize, serialize};
-
+    use serde_json::{from_slice as deserialize, to_vec as serialize};
+    
     // --------------------- //
     // Base BaseInterval Testing //
     // --------------------- //

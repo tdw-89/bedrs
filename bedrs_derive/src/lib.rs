@@ -38,7 +38,7 @@ pub fn coordinates_derive(input: TokenStream) -> TokenStream {
 }
 
 // Parses the fields and identifies the special ones
-fn parse_fields(input: &DeriveInput) -> FieldsInfo {
+fn parse_fields(input: &DeriveInput) -> FieldsInfo<'_> {
     let mut fields_info = FieldsInfo::default();
     if let Data::Struct(data_struct) = &input.data {
         if let Fields::Named(fields_named) = &data_struct.fields {

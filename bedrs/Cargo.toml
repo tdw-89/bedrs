@@ -32,9 +32,9 @@ htslib = ["dep:rust-htslib"]
 
 [dev-dependencies]
 criterion = "0.5.1"
-bincode = "1.3.3"
 tinystr = "0.7.5"
 csv = "1.3.0"
+serde_json = "1.0.149"
 
 [[bench]]
 name = "benchmark"
